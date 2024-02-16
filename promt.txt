@@ -1,0 +1,3 @@
+Install vim plugin:
+Run:
+:PluginInstall

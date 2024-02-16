@@ -1,0 +1,591 @@
+priority -50
+
+extends c
+
+# We want to overwrite everything in parent ft.
+priority -49
+###########################################################################
+#			    Global functions 						  #
+###########################################################################
+
+global !p
+
+def write_docstring_args(arglist, snip):
+	args = str(arglist).split(',')
+
+	if len(args) > 1:
+		c = 0
+		for arg in args:
+			if c == 0:
+				snip.rv += arg
+				c = 1
+			else:
+				snip += '*       : %s' % arg.strip()
+	else:
+		snip.rv = args[0]
+
+
+endglobal
+
+###########################################################################
+#                            TextMate Snippets                            #
+###########################################################################
+snippet snips "All snippets"
+snips    ->    see all snippets
+ponce    ->    pragma once
+ctmp     ->    contest template
+tmp      ->    normal template
+etc      ->    enable test case
+etf      ->    euler totient function PHI(0-1e5+9)
+equation ->    linear diophantine equation solver class
+sieve    ->    bitwise sieve of eratosthanes
+binexpo  ->    binary exponentiation
+cout     ->    standard output
+cin      ->    standard input
+for      ->    for loop
+fore     ->    foreach loop
+fori     ->    iterator of container
+while    ->    while loop
+mkp      ->    make_pair
+mkt      ->    make_tuple
+uptr     ->    unique_ptr
+sptr     ->    shared_ptr
+wptr     ->    weak_ptr
+gcd      ->    gcd function
+min      ->    min function
+max      ->    max function
+minel    ->    min_element function
+maxel    ->    max_element function
+sort     ->    sort function
+map      ->    map
+vec      ->    vector
+vecp     ->    vector pair
+vofv     ->    vector of vector
+set      ->    set
+endsnippet
+
+snippet ponce "#pragma once include guard"
+#pragma once
+
+endsnippet
+
+snippet tmp "Normal Template"
+/**
+ * author : toerso
+ * to     : mazda
+ * date   : `date +%d.%m.%y`
+ */
+
+/* Problem ID: ${0} */
+#include<iostream>
+
+int main(int argc, char *argv[]) {
+
+
+   return 0;
+}
+endsnippet
+
+snippet ctmp "Contest Template"
+/**
+ * author : toerso
+ * to     : mazda
+ * date   : `date +%d.%m.%y`
+ */
+
+/* Problem ID: ${0} */
+#include<bits/stdc++.h>
+
+#define LONGMAX std::numeric_limits<int64_t>::max()
+#define LONGMIN std::numeric_limits<int64_t>::min()
+#define INTMAX std::numeric_limits<int32_t>::max()
+#define INTMIN std::numeric_limits<int32_t>::min()
+
+constexpr int MODVALUE = 1e9+7;
+void io_exe(int&);
+
+void solution() {
+
+}
+
+/********************************************Danger******************************/
+int main(int argc, char *argv[]) {
+   int queries;
+   io_exe(queries);
+
+   for(int q = 0; q < queries; q++) {
+      solution();
+   }
+
+   return 0;
+}
+
+void io_exe(int& queries) {
+   queries = 1;
+   std::ios_base::sync_with_stdio(false);
+   std::cin.tie(NULL);
+
+#ifndef ONLINE_JUDGE
+   (void) !freopen("input.txt", "r", stdin);
+   (void) !freopen("output.txt", "w", stdout);
+#endif
+
+#ifdef TEST_CASE_ENABLED
+   std::cin >> queries;
+#endif
+}
+endsnippet
+
+##some important custom function
+#gcd
+
+#sieve of eratosthanes
+snippet sieve "all primes generator"
+
+std::vector<int> bitSieve(int& n) {
+   int size = (n/32) + 1;
+   int sqrtN = (int)std::sqrt(n);
+
+   std::vector<int> primes(size, 0);
+
+   auto isprime = [](int x, int pos) {
+
+      return x&(1<<pos);
+   };
+
+   auto setAsPrime = [](int x, int pos) {
+      return x|=(1<<pos);
+   };
+
+   for(int i = 3; i <= sqrtN; i += 2) {
+      if(isprime(primes[i>>5], i&31)) continue;
+      for(int j = i*i; j <= n; j += 2*i) {
+         primes[j>>5] = setAsPrime(primes[j>>5], j&31);
+      }
+   }
+
+   std::vector<int> allPrimes;
+
+   allPrimes.emplace_back(2);
+
+   for(int i = 3; i <= n; i += 2) {
+      if(isprime(primes[i>>5], i&31)) continue;
+      allPrimes.emplace_back(i);
+   }
+
+   return allPrimes;
+}
+endsnippet
+
+#Euler totient function(ETF/PHI)
+snippet etf "Euler Totient Function(phi(0-1e5+9))"
+const int N = 1e5+9;
+int phi[N];
+
+void totient() {
+   for (int i = 0; i < N; ++i) phi[i] = i;
+
+   for (int i = 2; i < N; ++i) {
+      if(phi[i] == i) {
+         for (int j = i; j < N; j += i) phi[j] -= phi[j]/i;
+      }
+   }
+}
+endsnippet
+
+#gcd
+snippet gcd "Greatest Common Divisor"
+#define gcd std::__gcd
+endsnippet
+
+#min
+snippet min "Finding minimum"
+std::min(${0});
+endsnippet
+
+#max
+snippet max "Finding max"
+std::max(${0});
+endsnippet
+
+#min_element
+snippet minel "Finding minimum element"
+std::min_element(${0});
+endsnippet
+
+#max_element
+snippet maxel "Finding maximum element"
+std::max_element(${0});
+endsnippet
+
+#sort elements
+snippet sort "Sort elements"
+std::sort(${0});
+endsnippet
+
+#binary exponentiation
+snippet binexpo "Binary Exponentiation"
+int binMul(int a, int b) {
+   int result = 0;
+
+   while(b) {
+      if(b&1) result = (result + a);
+      a = (a + a);
+      b >>= 1;
+   }
+
+   return result;
+}
+
+int binExpo(int base, int power) {
+   int exponentValue = 1;
+
+   while(power) {
+      if(power&1) exponentValue = binMul(base, exponentValue);
+      base = binMul(base, base);
+      power >>= 1;
+   }
+
+   return exponentValue;
+}
+endsnippet
+
+#Equation class
+snippet equation "Equation class"
+class Equation {
+public:
+   int extendedEuclid(int a, int b, int& x, int& y) {
+      x = 1, y = 0;
+      int x1 = 0, y1 = 1;
+
+      while(b) {
+         std::tie(x, x1) = std::make_tuple(x1, x - x1*(a/b));
+         std::tie(y, y1) = std::make_tuple(y1, y - y1*(a/b));
+         std::tie(a, b) = std::make_tuple(b, a - b*(a/b));
+      }
+
+      return a;
+   }
+
+   bool findAnySolution(int a, int b, int c, int& x, int& y, int& g) {
+      g = extendedEuclid(a, b, x, y);
+
+      if(c%g) return false;
+
+      x *= (c/g), y *= (c/g);
+
+      if(a < 0) x = -x;
+      if(b < 0) y = -y;
+
+      return true;
+   }
+
+   int findAllSolutions(int a, int b, int c, int minx, int maxx, int miny, int maxy) {
+       int x, y, g;
+
+       if (!findAnySolution(a, b, c, x, y, g))
+           return 0;
+
+       a /= g;
+       b /= g;
+
+       int sign_a = a > 0 ? +1 : -1;
+       int sign_b = b > 0 ? +1 : -1;
+
+       auto shiftSolution = [&x, &y, &a, &b](int count) {
+         x += count * b;
+         y -= count * a;
+       };
+
+       shiftSolution((minx - x) / b);
+       if (x < minx)
+           shiftSolution(sign_b);
+       if (x > maxx)
+           return 0;
+       int lx1 = x;
+
+       shiftSolution((maxx - x) / b);
+       if (x > maxx)
+           shiftSolution(-sign_b);
+       int rx1 = x;
+
+       shiftSolution(-(miny - y) / a);
+       if (y < miny)
+           shiftSolution(-sign_a);
+       if (y > maxy)
+           return 0;
+       int lx2 = x;
+
+       shiftSolution(-(maxy - y) / a);
+       if (y > maxy)
+           shiftSolution(sign_a);
+       int rx2 = x;
+
+       if (lx2 > rx2)
+           std::swap(lx2, rx2);
+
+       int lx = std::max(lx1, lx2);
+       int rx = std::min(rx1, rx2);
+
+       if (lx > rx)
+           return 0;
+
+       /*
+        *Once we have lx and rx, it is also simple to enumerate through all the solutions.
+        *Just need to iterate through x = lx + k.b/g for all k >= 0 until x = rx and find the corresponding y values using the equation ax + by = c.
+        **/
+
+       return (rx - lx) / abs(b) + 1;
+   }
+};
+endsnippet
+
+snippet main
+int main(int argc, char *argv[])
+{
+	${0}
+	return 0;
+}
+endsnippet
+
+#defination
+#testcase enable
+snippet etc "enable test case"
+#define TEST_CASE_ENABLED
+endsnippet
+
+##standard output
+#std::cout
+snippet cout "standard output"
+std::cout << ${1:x} << "\n";
+endsnippet
+
+##standard input
+#std::cin
+snippet cin "standard input"
+std::cin >> ${1:x};
+endsnippet
+
+##STL funtionality
+#std::make_pair()
+snippet mkp "std::make_pair(x, y)"
+std::make_pair(${1:x}, ${2:y});
+endsnippet
+
+#std::make_tuple()
+snippet mkt "std::make_tuple(x, y, z)"
+std::make_tuple(${1:x}, ${2:y}, ${3:z});
+endsnippet
+
+#std::unique_ptr
+snippet uptr "std::unique_ptr<>"
+std::unique_ptr<${1:T}> ptr = std::make_unique<`!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`>(${2:x});
+endsnippet
+
+#std::shared_ptr
+snippet sptr "std::shared_ptr<>"
+std::shared_ptr<${1:T}> ptr = std::make_shared<`!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`>(${2:x});
+endsnippet
+
+##all for loop variation
+#for loop
+snippet for "for loop"
+for (${6:int} ${3:i} = 0; `!p import re; snip.rv = re.split("[^\w]",t[3])[-1]` ${4:<} ${1:count}; ${5:++`!p snip.rv = t[3].split(" ")[-1]`}) {
+	${VISUAL}$0
+}
+endsnippet
+
+#foreach loop
+snippet fore "foreach loop"
+for(${3:auto} ${2:elem}: ${1:container}) {
+   ${VISUAL}$0
+}
+endsnippet
+
+#iterator
+snippet fori "iterator"
+for (${6:auto} ${1:i} = ${2:v.begin()}; `!p import re; snip.rv = re.split("[^\w]",t[1])[-1]` ${4:!=} ${3:`!p m = re.search(r'^(?:(.*)(\.|->)begin\(\)|((?:std|boost)::)?begin\((.*)\))$', t[2]); snip.rv = (((m.group(3) if m.group(3) else "") + "end(" + m.group(4) + ")") if m.group(4) else (m.group(1) + m.group(2) + "end()")) if m else ""`}; ${5:++`!p snip.rv = t[1].split(" ")[-1]`}) {
+	${VISUAL}$0
+}
+endsnippet
+
+snippet beginend "$1.begin(), $1.end() (beginend)"
+${1:v}${1/^.*?(-)?(>)?$/(?2::(?1:>:.))/}begin(), $1${1/^.*?(-)?(>)?$/(?2::(?1:>:.))/}end()
+endsnippet
+
+#while loop
+snippet while "while loop"
+while(${1:x}) {
+   $0
+}
+endsnippet
+
+
+snippet cl "class .. (class)"
+class ${1:`!p snip.rv = snip.basename or "name"`}
+{
+public:
+	${1/(\w+).*/$1/} (${2:arguments});
+	virtual ~${1/(\w+).*/$1/} ();
+
+private:
+	${0:/* data */}
+};
+endsnippet
+
+snippet ns "namespace .. (namespace)"
+namespace${1/.+/ /m}${1:`!p snip.rv = snip.basename or "name"`}
+{
+	${VISUAL}$0
+}${1/.+/ \/* /m}$1${1/.+/ *\/ /m}
+endsnippet
+
+snippet nsa "namespace alias"
+namespace ${1:alias} = ${2:namespace};
+endsnippet
+
+snippet using "using directive/using declaration/type alias"
+using ${1:namespace}`!p snip.rv = ' ' if t[1] == 'namespace' else ' = ' if t[1] != '' else ''`${2:name};
+endsnippet
+
+snippet readfile "read file (readF)"
+std::vector<char> v;
+if (FILE *fp = fopen(${1:"filename"}, "r"))
+{
+	char buf[1024];
+	while(size_t len = fread(buf, 1, sizeof(buf), fp))
+		v.insert(v.end(), buf, buf + len);
+	fclose(fp);
+}
+endsnippet
+
+##stl container
+#std::map<>
+snippet map "std::map (map)"
+std::map<${1:int}, `!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`> map$0;
+endsnippet
+
+#std::vector<>
+snippet vec "std::vector (v)"
+std::vector<${1:char}> v$0;
+endsnippet
+
+#std::vector<std::pair<>>
+snippet vecp "std::vector<std::pair<x, x>> (vp)"
+std::vector<std::pair<${1:int}, `!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`>> vp$0;
+endsnippet
+
+#std::vector<std::vector<>>
+snippet vofv "std::vector<std::vector<>>"
+std::vector<std::vector<${1:int}>> vv$0;
+endsnippet
+
+#std::set<>
+snippet set "std::set (s)"
+std::set<${1:int}>s$0;
+endsnippet
+
+#std::set<std::pair<>>
+snippet setp "std::set<std::pair<x, x>> (sp)"
+std::set<std::pair<${1:int}, `!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`>> sp$0;
+
+endsnippet
+
+snippet tp "template <typename ..> (template)"
+template <typename ${1:_InputIter}>
+endsnippet
+
+snippet cla "An entire .h generator" b
+#ifndef ${2:`!v substitute(vim_snippets#Filename('$1_H','ClassName'),'.*','\U&\E','')`}
+#define $2
+
+class ${1:`!v substitute(substitute(vim_snippets#Filename('$1','ClassName'),'^.','\u&',''), '_\(\w\)', '\u\1', 'g')`}
+{
+private:
+	$3
+
+public:
+	$1();
+	virtual ~$1();
+};
+
+#endif /* $2 */
+endsnippet
+
+
+snippet fnc "Basic c++ doxygen function template" b
+/**
+* @brief: ${4:brief}
+*
+* @param: `!p write_docstring_args(t[3],snip)`
+*
+* @return: `!p snip.rv = t[1]`
+*/
+${1:ReturnType} ${2:FunctionName}(${3:param}) {
+	${0:FunctionBody}
+}
+endsnippet
+
+snippet boost_test "Boost test module" b
+#define BOOST_TEST_MODULE ${1:TestModuleName}
+#include <boost/test/included/unit_test.hpp>
+
+BOOST_AUTO_TEST_CASE(${2:TestCaseName})
+{
+	${0:TestDefinition}
+}
+
+endsnippet
+
+snippet boost_suite "Boost test suite module" b
+#define BOOST_TEST_MODULE ${1:TestModuleName}
+#include <boost/test/included/unit_test.hpp>
+
+BOOST_AUTO_TEST_SUITE(${2:SuiteName})
+
+BOOST_AUTO_TEST_CASE(${3:TestCaseName})
+{
+	${0:TestDefinition}
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+endsnippet
+snippet boost_test_fixture "Boost test module with fixture" b
+#define BOOST_TEST_MODULE ${1:TestModuleName}
+#include <boost/test/included/unit_test.hpp>
+
+struct ${2:FixtureName} {
+	$2() {}
+	virtual ~$2() {}
+	/* define members here */
+};
+
+BOOST_FIXTURE_TEST_CASE(${3:SuiteName}, $2)
+{
+	${0:TestDefinition}
+}
+
+endsnippet
+
+snippet boost_suite_fixture "Boost test suite with fixture" b
+#define BOOST_TEST_MODULE ${1:TestModuleName}
+#include <boost/test/included/unit_test.hpp>
+
+struct ${2:FixtureName} {
+	$2() {}
+	virtual ~$2() {}
+	/* define members here */
+};
+
+BOOST_FIXTURE_TEST_SUITE(${3:SuiteName}, $2)
+
+BOOST_AUTO_TEST_CASE(${4:TestCaseName})
+{
+	${0:TestDefinition}
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+endsnippet
+# vim:ft=snippets:
