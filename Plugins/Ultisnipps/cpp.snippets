@@ -35,19 +35,34 @@ snips    ->    see all snippets
 ponce    ->    pragma once
 ctmp     ->    contest template
 tmp      ->    normal template
-etc      ->    enable test case
+def-etc  ->    define enable test case
+def-cexpostr   define __COMPILE_EXPO_STR
 etf      ->    euler totient function PHI(0-1e5+9)
 equation ->    linear diophantine equation solver class
 sieve    ->    bitwise sieve of eratosthanes
-binexpo  ->    binary exponentiation
+powmul   ->    binary exponentiation with indirect multiply
+pow      ->    binary exponentiation
+prho     ->    pollard rho prime factorization[pf = prime factorization, pr = pollard rho]
 cout     ->    standard output
 cin      ->    standard input
+ll       ->    long long
+i64      ->    int64_t
+i32      ->    int32_t
+uint     ->    unsigned int
+ull      ->    unsigned long long
+str      ->    std::string
+scast    ->    static_cast
+dcast    ->    dynamic_cast
 for      ->    for loop
 fore     ->    foreach loop
 fori     ->    iterator of container
 while    ->    while loop
 mkp      ->    make_pair
 mkt      ->    make_tuple
+rndm_d   ->    random_device
+rndm_mt  ->    mt19937
+rndm_mt64->    mt19937_64
+uintd    ->    uniform_int_distribution
 uptr     ->    unique_ptr
 sptr     ->    shared_ptr
 wptr     ->    weak_ptr
@@ -57,9 +72,14 @@ max      ->    max function
 minel    ->    min_element function
 maxel    ->    max_element function
 sort     ->    sort function
+ubound   ->    upper_bound
+lbound   ->    lower_bound
+timer    ->    benchmark performance
 map      ->    map
-vec      ->    vector
-vecp     ->    vector pair
+vec      ->    vector with integer
+vll      ->    vector with long long
+vpi      ->    vector pair with integer
+vpll     ->    vector pair with long long
 vofv     ->    vector of vector
 set      ->    set
 endsnippet
@@ -69,6 +89,27 @@ snippet ponce "#pragma once include guard"
 
 endsnippet
 
+snippet ll "long long"
+long long
+endsnippet
+
+snippet i64 "int64_t"
+int64_t
+endsnippet
+
+snippet i32 "int32_t"
+int32_t
+endsnippet
+
+snippet ull "unsigned long long"
+unsigned long long
+endsnippet
+
+snippet uint "unsigned int"
+unsigned int
+endsnippet
+
+
 snippet tmp "Normal Template"
 /**
  * author : toerso
@@ -76,7 +117,7 @@ snippet tmp "Normal Template"
  * date   : `date +%d.%m.%y`
  */
 
-/* Problem ID: ${0} */
+/* Problem ID: ${1:id-cf} */
 #include<iostream>
 
 int main(int argc, char *argv[]) {
@@ -93,13 +134,53 @@ snippet ctmp "Contest Template"
  * date   : `date +%d.%m.%y`
  */
 
-/* Problem ID: ${0} */
+/* Problem ID: ${1:id-cf} */
 #include<bits/stdc++.h>
 
 #define LONGMAX std::numeric_limits<int64_t>::max()
 #define LONGMIN std::numeric_limits<int64_t>::min()
 #define INTMAX std::numeric_limits<int32_t>::max()
 #define INTMIN std::numeric_limits<int32_t>::min()
+#define mod %
+
+namespace MazdaXtoerso {
+    struct Timer {
+    private:
+        std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint, endTimePoint;
+    public:
+        Timer() {
+            startTimePoint = std::chrono::high_resolution_clock::now();
+        }
+        ~Timer() {
+            endTimePoint = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep start = std::chrono::time_point_cast<std::chrono::microseconds>(startTimePoint).time_since_epoch().count();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint).time_since_epoch().count();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep microDuration = end - start;
+            double milliDuration = microDuration*0.001;
+            double secondDuration = milliDuration*0.001;
+            std::cout << "\n\ntooks : ";
+            std::cout << microDuration << "(us) " << milliDuration << "(ms) " << secondDuration << "(s)\n";
+        }
+    };
+    namespace Benchmark {
+        Timer* timer;
+        void start() {
+         #ifndef ONLINE_JUDGE
+           timer = new Timer();
+         #define TIMER
+         #endif
+        }
+        void end() {
+         #ifndef ONLINE_JUDGE
+         #ifdef TIMER
+            delete timer;
+         #endif
+         #endif
+        }
+    }
+}
+
+using ui64 = uint64_t;
 
 constexpr int MODVALUE = 1e9+7;
 void io_exe(int&);
@@ -126,8 +207,8 @@ void io_exe(int& queries) {
    std::cin.tie(NULL);
 
 #ifndef ONLINE_JUDGE
-   (void) !freopen("input.txt", "r", stdin);
-   (void) !freopen("output.txt", "w", stdout);
+   (void) !freopen("Input.txt", "r", stdin);
+   (void) !freopen("Output.txt", "w", stdout);
 #endif
 
 #ifdef TEST_CASE_ENABLED
@@ -140,41 +221,42 @@ endsnippet
 #gcd
 
 #sieve of eratosthanes
-snippet sieve "all primes generator"
-
-std::vector<int> bitSieve(int& n) {
-   int size = (n/32) + 1;
-   int sqrtN = (int)std::sqrt(n);
-
-   std::vector<int> primes(size, 0);
-
-   auto isprime = [](int x, int pos) {
-
-      return x&(1<<pos);
-   };
-
-   auto setAsPrime = [](int x, int pos) {
-      return x|=(1<<pos);
-   };
-
-   for(int i = 3; i <= sqrtN; i += 2) {
-      if(isprime(primes[i>>5], i&31)) continue;
-      for(int j = i*i; j <= n; j += 2*i) {
-         primes[j>>5] = setAsPrime(primes[j>>5], j&31);
+snippet sieve "All Prime Generator"
+class Sieve {
+private:
+   std::vector<int> primes;
+   int sqrtN, number;
+public:
+   Sieve(int n):number(n) {
+      int size = (n/32) + 1;
+      sqrtN = static_cast<int>(std::sqrt(n));
+      primes.resize(size, 0);
+      _Pri_genPrimes();
+   }
+private:
+   int _Pri_setAsPrime(int value, int pos) {
+      return value|=(1<<pos);
+   }
+   bool _Pri_checkPrime(int value, int pos) {
+      return value&(1<<pos);
+   }
+   bool _Pri_genPrimes() {
+      for(int i = 3; i <= sqrtN; i += 2) {
+         if(_Pri_checkPrime(primes[i>>5], i&31)) continue;//i/32 and i%32
+         for(int j = i*i; j <= number; j += 2*i) {
+            primes[j>>5] = _Pri_setAsPrime(primes[j>>5], j&31);
+         }
       }
+      return true;
    }
 
-   std::vector<int> allPrimes;
-
-   allPrimes.emplace_back(2);
-
-   for(int i = 3; i <= n; i += 2) {
-      if(isprime(primes[i>>5], i&31)) continue;
-      allPrimes.emplace_back(i);
+public:
+   bool isPrime(int value) {
+      if(value == 2) return true;
+      if(value%2 == 0 || value == 1) return false;
+      return !_Pri_checkPrime(primes[value>>5], value&31);
    }
-
-   return allPrimes;
-}
+};
 endsnippet
 
 #Euler totient function(ETF/PHI)
@@ -191,6 +273,179 @@ void totient() {
       }
    }
 }
+endsnippet
+
+snippet rand_mtuid "merssen twister with uniform int distribution"
+${1:int} rand(${2:int} lower, ${3:int} upper) {
+   std::random_device rd;
+   std::mt19937 gen(rd());
+   std::uniform_int_distribution<${4:int}> dist(lower, upper);
+
+   return dist(gen);
+}
+endsnippet
+
+######## Pollard Rho Prime Factorization ########
+snippet prho "Pollard Rho Prime Factorization"
+namespace MazdaXtoerso {
+    using ui128 = __uint128_t; constexpr int MAXLIMIT = 1e6+9;
+
+    template<typename Tn> struct PollardRho {
+    private:
+        //Declare Smallest Prime Factors Array
+        int spf[MAXLIMIT];
+
+    private:
+        inline Tn mult(Tn a, Tn b, Tn p) {
+            return static_cast<Tn>(static_cast<ui128>(a)*b mod p);
+        }
+
+        inline Tn f(Tn x, Tn c, Tn n) {
+            return (mult(x, x, n) + c) mod n;
+        }
+
+        inline Tn diff(Tn a, Tn b) {
+            return (a > b) ? a - b : b - a;
+        }
+
+        inline Tn rand(Tn lower, Tn upper) {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<Tn> dist(lower, upper);
+
+            return dist(gen);
+        }
+
+        Tn pow(Tn base, Tn power, Tn p) {
+            Tn res = 1;
+            Tn newBase = base mod p;
+            while(power) {
+                if(power & 1) res = mult(res, newBase, p);
+                newBase = mult(newBase, newBase, p);
+                power >>= 1;
+            }
+
+            return res;
+        }
+
+        Tn gcd(Tn a, Tn b) {
+            while(b) {
+                a %= b; std::swap(a, b);
+            }
+
+            return a;
+        }
+        //have to call it at the beginnig of main function
+        void init() {
+            spf[1] = 1; int sqrtn = static_cast<int>(std::sqrt(MAXLIMIT));
+
+            for (int i = 2; i < MAXLIMIT; ++i) spf[i] = i;
+            for(int i = 4; i < MAXLIMIT; i += 2) spf[i] = 2;
+            for (int i = 3; i <= sqrtn ; i += 2) {
+                if(spf[i] != i) continue;
+
+                for(int j = i*i; j < MAXLIMIT; j += i) {
+                if(spf[j] != j) continue;
+                spf[j] = i;
+                }
+            }
+        }
+
+        bool millerRabin(Tn p) {
+            if(p < 4) return p == 2 || p == 3;
+            int s = 0; Tn d = p - 1;
+
+            while((d&1) == 0) {
+                d >>= 1, s++;
+            }
+
+            auto isComposite = [&d, &s, &p, this](int a) -> bool {
+                Tn x = pow(a, d, p);
+
+                if(x == 1 || x == p - 1) return false;
+
+                for (int r = 1; r < s; ++r) {
+                    x = mult(x, x, p);
+                    if(x == p - 1) return false;
+                }
+
+                return true;
+            };
+
+            for(int a : {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}) {
+                if(static_cast<Tn>(a) == p) return true;
+
+                if(isComposite(a)) return false;
+            }
+
+            return true;
+        }
+
+        Tn pollardRhoBrent(Tn n) {
+            Tn har = rand(2, n), c = rand(2, n), po = 1, q = 1;
+            const Tn m = 128;
+            Tn g, hars, tor;
+
+            do {
+                tor = har;
+                for(Tn i = 0; i < po; ++i) har = f(har, c, n);
+
+                Tn k = 0;
+
+                do{
+                    hars = har;
+
+                    for(Tn i = 0; i < std::min(m, po - k); ++i) {
+                        har = f(har, c, n);
+                        q = mult(q, diff(har, tor), n);
+                    }
+
+                    g = gcd(q, n);
+                    k += m;
+                }while(k < po && g == 1);
+
+                po <<= 1;
+            }while(g == 1);
+
+            if(g == n) {
+                do {
+                    hars = f(hars, c, n);
+                    g = gcd(diff(hars, tor), n);
+                }while(g == 1);
+            }
+
+            return g;
+        }
+    public:
+        PollardRho() {//constructor
+            init();
+        }
+
+    public:
+        std::vector<Tn> primeFactorize(Tn n) {
+            if(n <= 1) return {};
+            if(millerRabin(n)) return {n};
+
+            std::vector<Tn> primes, helper;
+
+            if(n > 1 && n < MAXLIMIT) {
+                do {
+                    primes.emplace_back(spf[n]); n /= spf[n];
+                }while(n != 1);
+
+                return primes;
+            }
+
+            Tn p = pollardRhoBrent(n);
+            p = (p != 0 && p != n) ? p : pollardRhoBrent(n);
+            primes = primeFactorize(p);
+            helper = primeFactorize(n/p);
+            primes.insert(primes.end(), helper.begin(), helper.end());
+
+            return primes;
+        }
+    };
+};
 endsnippet
 
 #gcd
@@ -223,30 +478,68 @@ snippet sort "Sort elements"
 std::sort(${0});
 endsnippet
 
+#upper_bound (ForwardIterator first, ForwardIterator last, const T& val)
+snippet ubound "upper_bound"
+std::upper_bound(v.begin(), v.end(), ${0});
+endsnippet
+
+#lower_bound (ForwardIterator first, ForwardIterator last, const T& val);
+snippet lbound "lower_bound"
+std::lower_bound(v.begin(), v.end(), ${0})
+endsnippet
+
 #binary exponentiation
-snippet binexpo "Binary Exponentiation"
-int binMul(int a, int b) {
-   int result = 0;
-
-   while(b) {
-      if(b&1) result = (result + a);
-      a = (a + a);
-      b >>= 1;
+snippet powmul "Binary Exponentiation Class"
+template<typename Tbase, typename Tpower, typename Tmod> class Exponentiation {
+private:
+   Tmod _Pri_BinMul(Tmod a, auto b, Tmod p) {
+      Tmod result = 0;
+      while(b) {
+         if(b&1) result = (result + a) mod p;
+         a = (a + a) mod p;
+         b >>= 1;
+      }
+      return result;
    }
+   Tmod _Pri_BinExpo(Tbase base, auto power, Tmod p = INTMAX) {
+      Tmod exponent_value = 1;
+      while(power) {
+         if(power&1) exponent_value = _Pri_BinMul(base, exponent_value, p);
+         base = _Pri_BinMul(base, base, p);
+         power >>= 1;
+      }
+      return exponent_value;
+   }
+public:
+   int pow(Tbase base, Tpower power, Tmod p = INTMAX) {
+      Tmod new_base = base mod p;
+      Tmod exponent_value = 1;
+#ifdef __COMPILE_EXPO_STR__
+      int current = base, size = static_cast<int>(power.size()) - 1;
+      for(int i = size; i >= 0; --i) {
+         exponent_value = (exponent_value * _Pri_BinExpo(current, static_cast<Tmod>(power[i]-'0'), p)) mod p;
+         current = _Pri_BinExpo(current, 10, p);
+      }
+#endif
+#ifndef __COMPILE_EXPO_STR__
+      exponent_value = _Pri_BinExpo(new_base, power, p);
+#endif
+      return exponent_value;
+   }
+};
+endsnippet
 
-   return result;
-}
-
-int binExpo(int base, int power) {
-   int exponentValue = 1;
-
+snippet pow "Binary Exponentiation"
+template<typename Tbase, typename Tpower, typename Tmod> Tmod pow(Tbase base, Tpower power, Tmod p = MODVALUE) {
+   Tmod res = 1;
+   Tmod newBase = base mod p;
    while(power) {
-      if(power&1) exponentValue = binMul(base, exponentValue);
-      base = binMul(base, base);
+      if(power & 1) res = (res*newBase) mod p;
+      newBase = (newBase * newBase) mod p;
       power >>= 1;
    }
 
-   return exponentValue;
+   return res;
 }
 endsnippet
 
@@ -340,6 +633,46 @@ public:
 };
 endsnippet
 
+snippet timer "Measure Execution Time"
+namespace MazdaXtoerso {
+    struct Timer {
+    private:
+        std::chrono::time_point<std::chrono::high_resolution_clock> startTimePoint, endTimePoint;
+    public:
+        Timer() {
+            startTimePoint = std::chrono::high_resolution_clock::now();
+        }
+        ~Timer() {
+            endTimePoint = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep start = std::chrono::time_point_cast<std::chrono::microseconds>(startTimePoint).time_since_epoch().count();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint).time_since_epoch().count();
+            std::chrono::duration<long int, std::ratio<1, 1000000>>::rep microDuration = end - start;
+            double milliDuration = microDuration*0.001;
+            double secondDuration = milliDuration*0.001;
+            std::cout << "\n\ntooks : ";
+            std::cout << microDuration << "(us) " << milliDuration << "(ms) " << secondDuration << "(s)\n";
+        }
+    };
+    namespace Benchmark {
+        Timer* timer;
+        void start() {
+         #ifndef ONLINE_JUDGE
+           timer = new Timer();
+         #define TIMER
+         #endif
+        }
+        void end() {
+         #ifndef ONLINE_JUDGE
+         #ifdef TIMER
+            delete timer;
+         #endif
+         #endif
+        }
+    }
+}
+endsnippet
+
+
 snippet main
 int main(int argc, char *argv[])
 {
@@ -350,8 +683,13 @@ endsnippet
 
 #defination
 #testcase enable
-snippet etc "enable test case"
+snippet def-etc "enable test case"
 #define TEST_CASE_ENABLED
+endsnippet
+
+#compile exponentiation with string
+snippet def-cexpostr "Compile Exponentiation String"
+#define __COMPILE_EXPO_STR__
 endsnippet
 
 ##standard output
@@ -364,6 +702,34 @@ endsnippet
 #std::cin
 snippet cin "standard input"
 std::cin >> ${1:x};
+endsnippet
+
+snippet scast "Static Cast"
+static_cast<${1}>(${2});
+endsnippet
+
+snippet dcast "Dynamic Cast"
+dynamic_cast<${1}>(${2});
+endsnippet
+
+snippet str "std::string"
+std::string ${0}
+endsnippet
+
+snippet rndm_d "std::random_device"
+std::random_device rd;
+endsnippet
+
+snippet rndm_mt "std::mt19937"
+std::mt19937 gen(rd());
+endsnippet
+
+snippet rndm_mt64 "std::mt19937_64"
+std::mt19937_64 gen(rd());
+endsnippet
+
+snippet uintd "std::uniform_int_distribution"
+std::uniform_int_distribution<${0}> dist(${1:f}, ${2:t});
 endsnippet
 
 ##STL funtionality
@@ -466,8 +832,9 @@ std::map<${1:int}, `!p import re; snip.rv = re.split("[^\w]",t[1])[-1]`> map$0;
 endsnippet
 
 #std::vector<>
-snippet vec "std::vector (v)"
-std::vector<${1:char}> v$0;
+snippet vec "std::vector" i
+std::vector<${1:char}> ${2:name};
+$0
 endsnippet
 
 #std::vector<std::pair<>>
